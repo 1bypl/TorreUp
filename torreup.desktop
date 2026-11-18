@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=TorreUp
+GenericName=Local torrent browser
+Comment=Lokalna, anonimowa przeglądarka torrentów
+Exec=__EXEC__
+Icon=__ICON__
+Terminal=false
+Categories=Network;FileTransfer;Utility;
+Keywords=torrent;magnet;search;privacy;
+StartupNotify=true

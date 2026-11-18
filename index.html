@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
+  <title>TorreUp — lokalna przeglądarka torrentów</title>
+  <link rel="icon" href="/static/img/ghost.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body data-theme="midnight">
+
+<!-- ============ SIDE BAR ============ -->
+<aside class="sidebar" id="sidebar">
+  <div class="brand" id="brandHome">
+    <div class="brand-mascot" id="mascotHost"></div>
+    <div class="brand-text">
+      <span class="brand-name">Torre<span>Up</span></span>
+      <span class="brand-sub" data-i18n="app.tagline">Lokalnie. Anonimowo. Bez śladów.</span>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <button class="nav-item active" data-view="search">
+      <span class="nav-ico">⌕</span><span data-i18n="nav.search">Szukaj</span>
+    </button>
+    <button class="nav-item" data-view="trending">
+      <span class="nav-ico">✦</span><span data-i18n="nav.trending">Najlepsze</span>
+    </button>
+    <button class="nav-item" data-view="favorites">
+      <span class="nav-ico gold">★</span><span data-i18n="nav.favorites">Ulubione</span>
+      <span class="badge" id="favCount">0</span>
+    </button>
+    <button class="nav-item" data-view="categories">
+      <span class="nav-ico">▦</span><span data-i18n="nav.categories">Kategorie</span>
+    </button>
+    <button class="nav-item" data-view="settings">
+      <span class="nav-ico">⚙</span><span data-i18n="nav.settings">Ustawienia</span>
+    </button>
+    <button class="nav-item" data-view="about">
+      <span class="nav-ico">ⓘ</span><span data-i18n="nav.about">O programie</span>
+    </button>
+  </nav>
+
+  <div class="sidebar-section">
+    <div class="section-label" data-i18n="sidebar.categories">KATEGORIE</div>
+    <div class="cat-nav" id="catNav"></div>
+  </div>
+
+  <div class="privacy-card">
+    <div class="privacy-head"><span class="shield">🛡</span> <span data-i18n="privacy.title">Tryb incognito</span></div>
+    <p data-i18n="privacy.desc">Twoje zapytania nie są zapisywane. Połączenia anonimowe, bez ciasteczek i referera.</p>
+    <div class="privacy-status"><span class="dot green"></span><span data-i18n="privacy.active">Ochrona aktywna</span></div>
+  </div>
+
+  <div class="sidebar-footer">
+    <span data-i18n="footer.opensource">GPL-3.0 · Open Source</span>
+    <span id="versionTag">v1.0.0</span>
+  </div>
+</aside>
+
+<!-- ============ MAIN ============ -->
+<main class="main">
+  <header class="topbar">
+    <button class="icon-btn menu-btn" id="menuBtn" title="Menu">☰</button>
+
+    <form class="search-box" id="searchForm">
+      <span class="search-ico">⌕</span>
+      <input type="text" id="searchInput" autocomplete="off" spellcheck="false"
+             data-i18n-ph="search.placeholder" placeholder="Szukaj filmów, gier, muzyki, książek...">
+      <button type="button" class="clear-btn" id="clearBtn" title="Wyczyść">✕</button>
+      <button type="submit" class="search-btn" data-i18n="search.button">Szukaj</button>
+    </form>
+
+    <div class="top-actions">
+      <button class="icon-btn" id="themeBtn" title="Motyw">◐</button>
+      <button class="icon-btn" id="langBtn" title="Język">🌐</button>
+      <div class="avatar" title="Gość">G</div>
+    </div>
+  </header>
+
+  <div class="content" id="content">
+
+    <!-- SEARCH / TRENDING / FAVORITES / CATEGORY VIEW -->
+    <section class="view active" id="view-results">
+      <div class="page-head">
+        <div>
+          <h1 id="pageTitle" data-i18n="page.searchTitle">Odkryj torrenty</h1>
+          <p class="subtitle" id="pageSubtitle" data-i18n="page.searchSub">Przeszukaj publiczne indeksy w pełnej prywatności.</p>
+        </div>
+        <div class="period-switch" id="periodSwitch">
+          <button data-period="day" data-i18n="trending.day">Dzień</button>
+          <button data-period="week" class="active" data-i18n="trending.week">Tydzień</button>
+          <button data-period="month" data-i18n="trending.month">Miesiąc</button>
+        </div>
+      </div>
+
+      <!-- live search status -->
+      <div class="search-status" id="searchStatus">
+        <div class="status-left">
+          <span class="pulse-ring"></span>
+          <span id="statusText" data-i18n="status.ready">Gotowy do wyszukiwania</span>
+        </div>
+        <div class="status-right" id="sourceChips"></div>
+      </div>
+
+      <!-- activity animation bar -->
+      <div class="activitybar-wrap" id="activityWrap">
+        <div class="activity-track"><div class="activity-fill" id="activityFill"></div></div>
+        <span class="activity-label" id="activityLabel">0 / 18 źródeł</span>
+      </div>
+
+      <!-- toolbar -->
+      <div class="toolbar">
+        <div class="result-count" id="resultCount" data-i18n="results.count">Wyniki</div>
+        <div class="toolbar-right">
+          <label class="sort-label" data-i18n="sort.label">Sortuj:</label>
+          <select id="sortSelect">
+            <option value="seeds" data-i18n="sort.seeds">Najwięcej seedów</option>
+            <option value="peers" data-i18n="sort.peers">Najwięcej peerów</option>
+            <option value="size" data-i18n="sort.size">Rozmiar pliku</option>
+            <option value="date" data-i18n="sort.date">Data dodania</option>
+            <option value="relevance" data-i18n="sort.relevance">Trafność</option>
+          </select>
+          <button class="view-toggle" id="refreshBtn" title="Odśwież wszystkie trackery">⟳</button>
+          <button class="view-toggle" id="viewToggle" title="Widok">☷</button>
+        </div>
+      </div>
+
+      <!-- category chips -->
+      <div class="chips" id="categoryChips"></div>
+
+      <!-- results -->
+      <div class="results" id="results"></div>
+
+      <div class="pagination" id="pagination" hidden></div>
+
+      <div class="empty" id="empty" hidden>
+        <div class="empty-ico">⌕</div>
+        <h3 data-i18n="empty.title">Nic nie znaleziono</h3>
+        <p data-i18n="empty.desc">Spróbuj innej frazy lub wybierz inną kategorię. Nieaktywne źródła są pomijane automatycznie.</p>
+      </div>
+    </section>
+
+    <!-- CATEGORIES VIEW -->
+    <section class="view" id="view-categories">
+      <div class="page-head">
+        <div>
+          <h1 data-i18n="cat.title">Kategorie</h1>
+          <p class="subtitle" data-i18n="cat.sub">Przeglądaj torrenty według rodzaju zawartości.</p>
+        </div>
+      </div>
+      <div class="cat-grid" id="catGrid"></div>
+    </section>
+
+    <!-- ABOUT VIEW -->
+    <section class="view" id="view-about">
+      <div class="page-head">
+        <div>
+          <h1 data-i18n="about.title">O programie</h1>
+          <p class="subtitle" data-i18n="about.sub">Lokalna, prywatna przeglądarka torrentów.</p>
+        </div>
+      </div>
+
+      <div class="about-wrap">
+        <div class="about-hero">
+          <div class="about-mascot" id="aboutMascot"></div>
+          <div class="about-hero-text">
+            <div class="about-name">Torre<span>Up</span> <span class="about-ver" id="aboutVersion">v1.0.0</span></div>
+            <p class="about-tagline" data-i18n="app.tagline">Lokalnie. Anonimowo. Bez śladów.</p>
+            <p class="about-desc" data-i18n="about.desc">
+              TorreUp przeszukuje publiczne indeksy torrentów bezpośrednio z Twojego komputera.
+              Nie wysyła historii zapytań, nie ustawia ciasteczek i nie wyświetla reklam.
+              Działa całkowicie lokalnie, z zachowaniem anonimowości.
+            </p>
+            <div class="about-badges">
+              <span class="about-badge">GPL-3.0-or-later</span>
+              <span class="about-badge" data-i18n="about.opensource">Open Source</span>
+              <span class="about-badge" data-i18n="about.privacy">Privacy first</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="about-grid">
+          <div class="panel">
+            <h3 data-i18n="about.details">Informacje</h3>
+            <div class="about-row"><span data-i18n="about.author">Autor</span>
+              <a id="authorLink" href="https://github.com/1bypl" target="_blank" rel="noopener noreferrer">1bypl ↗</a>
+            </div>
+            <div class="about-row"><span data-i18n="about.version">Wersja</span><b id="aboutVersionRow">1.0.0</b></div>
+            <div class="about-row"><span data-i18n="about.license">Licencja</span><b>GPL-3.0-or-later</b></div>
+            <div class="about-row"><span data-i18n="about.source">GitHub</span>
+              <a id="githubLink" href="https://github.com/1bypl" target="_blank" rel="noopener noreferrer">github.com/1bypl ↗</a>
+            </div>
+            <div class="about-actions">
+              <a class="btn btn-info" href="/api/license" target="_blank" rel="noopener noreferrer" data-i18n="about.readLicense">Przeczytaj licencję</a>
+              <a class="btn" href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener noreferrer">gnu.org ↗</a>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h3 data-i18n="about.systems">Obsługiwane systemy</h3>
+            <div class="os-list">
+              <div class="os-item"><span class="os-ico">🐧</span><div><b>Fedora</b><small data-i18n="about.packageDnf">dnf · python3</small></div><span class="os-ok">✓</span></div>
+              <div class="os-item"><span class="os-ico">🟠</span><div><b>Debian</b><small data-i18n="about.packageApt">apt · python3</small></div><span class="os-ok">✓</span></div>
+              <div class="os-item"><span class="os-ico">🔵</span><div><b>Ubuntu</b><small data-i18n="about.packageApt">apt · python3</small></div><span class="os-ok">✓</span></div>
+              <div class="os-item"><span class="os-ico">🐍</span><div><b data-i18n="about.anySystem">Każdy system z Pythonem 3.8+</b><small data-i18n="about.noDeps">Bez zależności zewnętrznych</small></div><span class="os-ok">✓</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel about-tech">
+          <h3 data-i18n="about.tech">Technologia i prywatność</h3>
+          <p data-i18n="about.techDesc">
+            Backend: Python (biblioteka standardowa) · Interfejs: HTML/CSS/JavaScript ·
+            Dane źródeł: RSS, XML sitemap i API publicznych trackerów.
+            Serwer nasłuchuje wyłącznie na 127.0.0.1. Brak logów, ciasteczek, referera i telemetrii.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SETTINGS VIEW -->
+    <section class="view" id="view-settings">
+      <div class="page-head">
+        <div>
+          <h1 data-i18n="settings.title">Ustawienia</h1>
+          <p class="subtitle" data-i18n="settings.sub">Dostosuj TorreUp do swoich potrzeb.</p>
+        </div>
+      </div>
+
+      <div class="settings-grid">
+        <div class="panel">
+          <h3 data-i18n="settings.appearance">Wygląd</h3>
+          <label class="field-label" data-i18n="settings.theme">Skórka</label>
+          <div class="theme-grid" id="themeGrid"></div>
+          <label class="field-label" data-i18n="settings.language">Język</label>
+          <select id="langSelect" class="wide-select"></select>
+          <label class="field-label" data-i18n="settings.mascot">Maskotka</label>
+          <div class="toggle-row">
+            <span data-i18n="settings.mascotDesc">Wyświetlaj duszka z harfą w nagłówku</span>
+            <label class="switch"><input type="checkbox" id="mascotToggle" checked><span class="slider"></span></label>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3 data-i18n="settings.privacy">Prywatność i bezpieczeństwo</h3>
+          <div class="toggle-row">
+            <span data-i18n="settings.remote">Szukaj w zewnętrznych indeksach</span>
+            <label class="switch"><input type="checkbox" id="remoteToggle" checked><span class="slider"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span data-i18n="settings.proxy">Użyj proxy / Tor (przez zmienne środowiskowe)</span>
+            <label class="switch"><input type="checkbox" id="proxyToggle"><span class="slider"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span data-i18n="settings.thumbnails">Pobieraj miniaturki anonimowo</span>
+            <label class="switch"><input type="checkbox" id="thumbToggle" checked><span class="slider"></span></label>
+          </div>
+          <div class="info-box" data-i18n="settings.privacyInfo">
+            TorreUp nie przechowuje historii, nie ustawia ciasteczek i nie wysyła danych analytics. Zapytania są anonimowe, a nieosiągalne źródła pomijane.
+          </div>
+        </div>
+
+        <div class="panel full">
+          <h3 data-i18n="settings.sources">Źródła wyszukiwania</h3>
+          <p class="panel-sub" data-i18n="settings.sourcesSub">Publiczne trackery skonfigurowane w silniku. Nieosiągalne są pomijane podczas wyszukiwania.</p>
+
+          <form class="custom-source-form" id="customSourceForm">
+            <div class="form-row">
+              <input type="text" id="customName" maxlength="60" data-i18n-ph="settings.sourceName" placeholder="Nazwa źródła">
+              <input type="text" id="customUrl" data-i18n-ph="settings.sourceUrl" placeholder="https://tracker.pl/search?q={q}">
+              <select id="customCat" class="wide-select"></select>
+              <button type="submit" class="btn btn-info add-source" data-i18n="settings.addBtn">+ Dodaj źródło</button>
+            </div>
+            <p class="form-hint" data-i18n="settings.sourceHint">W adresie użyj <code>{q}</code> w miejscu zapytania. Źródło zostanie zapisane lokalnie i użyte przy kolejnych wyszukiwaniach.</p>
+          </form>
+
+          <div class="provider-legend">
+            <span><i class="pdot on"></i><span data-i18n="status.ok">Działa</span></span>
+            <span><i class="pdot tried"></i><span data-i18n="status.tried">Sprawdzone — brak wyników</span></span>
+            <span><i class="pdot off"></i><span data-i18n="status.new">Nie sprawdzone jeszcze</span></span>
+          </div>
+          <div class="providers" id="providersList"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<!-- ============ DETAIL MODAL ============ -->
+<div class="modal-backdrop" id="modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true">
+    <button class="modal-close" id="modalClose">✕</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- ============ TOAST ============ -->
+<div class="toast" id="toast"></div>
+
+<script src="/static/js/i18n.js"></script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>
