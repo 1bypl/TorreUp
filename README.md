@@ -80,6 +80,26 @@ Zmienne środowiskowe:
 
 ---
 
+## Windows
+
+Gotowy instalator Windows można zbudować na komputerze z Pythonem 3.13 i Inno
+Setup 6. Aplikacja nie wymaga instalacji Pythona na komputerze użytkownika:
+środowisko Pythona jest dołączane do programu.
+
+```powershell
+py -3.13 -m pip install pyinstaller
+.\build_windows.cmd
+```
+
+Plik `dist\TorreUp-Setup.exe` instaluje aplikację dla bieżącego użytkownika,
+dodaje skrót w menu Start i opcjonalnie na pulpicie. Po instalacji uruchomienie
+skrótów otwiera TorreUp w domyślnej przeglądarce. Aplikacja działa bez okna
+konsoli; zamknięcie PowerShella ani przeglądarki nie zatrzymuje lokalnego
+serwera. Konfiguracja własnych źródeł jest zapisywana w
+`%APPDATA%\TorreUp\custom_providers.json`.
+
+---
+
 ## Instalacja w systemie (Fedora / Debian / Ubuntu)
 
 ```bash
